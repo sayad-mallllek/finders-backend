@@ -10,6 +10,7 @@ class OrderAdmin(BaseAdminModel):
     model = Order
     list_display = (
         "id",
+        "bill_id",
         "get_customer",
         "get_delivery_provider",
         "total_price",
@@ -21,6 +22,14 @@ class OrderAdmin(BaseAdminModel):
         "delivery_provider_id__name",
     )
 
+    actions = ["mark_as_delivered"]
+
+    def mark_as_delivered(self, request, queryset):
+        queryset.update(status="delivered")
+        self.message_user(request, "Marked as delivered")
+
+    mark_as_delivered.short_description = "Mark as delivered"
+
     @admin.display(ordering="customer__full_name", description="Customer")
     def get_customer(self, obj):
         return obj.customer.full_name
@@ -29,21 +38,36 @@ class OrderAdmin(BaseAdminModel):
     def get_delivery_provider(self, obj):
         return obj.delivery_provider.name
 
-    # list_per_page = 10
-    # list_editable = ("status",)
-    # list_display_links = ("order_number", "customer")
-    # readonly_fields = ("order_number", "customer", "status", "total_price")
-    # fieldsets = (
-    #     (None, {"fields": ("order_number", "customer", "status", "total_price")}),
-    # )
-    # ordering = ("order_number",)
-    # actions = ["mark_as_delivered"]
-
-    # def mark_as_delivered(self, request, queryset):
-    #     queryset.update(status="delivered")
-    #     self.message_user(request, "Marked as delivered")
-
-    # mark_as_delivered.short_description = "Mark as delivered"
+    fieldsets = (
+        (
+            "Items",
+            {
+                "fields": (
+                    "total_price",
+                    "number_of_items",
+                    "items_link",
+                    "bill_id",
+                )
+            },
+        ),
+        (
+            "Delivery",
+            {
+                "fields": (
+                    "delivered_at",
+                    "delivery_charge",
+                    "delivery_provider",
+                    "customer_delivery_charge",
+                    "has_received_price",
+                )
+            },
+        ),
+        (
+            "Customer",
+            {"fields": ("customer",)},
+        ),
+        ("Order Basket", {"fields": ("order_basket",)}),
+    )
 
 
 class InlineOrderAdmin(BaseAdminTabularInline):
